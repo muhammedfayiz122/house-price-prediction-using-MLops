@@ -1,0 +1,32 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t your-dockerhub-username/house-price-predictor:latest .
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+          docker push your-dockerhub-username/house-price-predictor:latest
+
+      - name: Deploy
+        run: |
+          ssh user@your-server "docker pull your-dockerhub-username/house-price-predictor:latest && docker run -d -p 5000:5000 your-dockerhub-username/house-price-predictor:latest"
